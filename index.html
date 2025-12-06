@@ -153,28 +153,30 @@
       color: var(--text-muted);
     }
 
-  /* ===== LAIKAPSTĀKĻI ===== */
+/* ===== LAIKAPSTĀKĻI ===== */
 .weather-card {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   opacity: 0.8;
+  overflow: hidden; /* ja nu kaut kas tomēr mēģina iziet ārā */
 }
 
-/* Te pārtaisām layoutu */
+/* Layout: kreisajā pusē ikona+temp, pa labi – extra
+   Zem tiem abiem – apraksts + meta rinda */
 .weather-main {
   display: grid;
-  grid-template-columns: auto minmax(0, 1.6fr);
+  grid-template-columns: 1fr auto;   /* kreisā daļa stiepjas, labajā auto platums */
   grid-template-rows: auto auto;
   grid-template-areas:
-    "left extra"
-    "right extra";    /* right ir zem left, extra pa labi abās rindās */
+    "left  extra"
+    "right extra";                   /* right zem left, extra pa labi abās rindās */
   column-gap: 1.2rem;
-  row-gap: 0.4rem;
+  row-gap: 0.35rem;
   align-items: flex-start;
 }
 
-/* 1. kolona: ikona + temp + Diena/Nakts */
+/* 1. bloks: ikona + lielā temperatūra + Diena/Nakts */
 .weather-main-left {
   grid-area: left;
   display: flex;
@@ -206,21 +208,23 @@
   color: var(--text-muted);
 }
 
-/* 2. kolona: papildus dati (nokrišņi, mitrums, vējš) */
+/* Labā kolonna: Nokrišņi / Mitrums / Vējš – tieši blakus kreisajai daļai */
 .weather-extra {
   grid-area: extra;
-  font-size: 0.8rem;
-  color: var(--text-muted);
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--text-muted);
   gap: 0.15rem;
 }
 
 .weather-extra span {
-  white-space: nowrap;
+  white-space: normal;   /* ļaujam lauzt rindas, lai neiziet ārpus kartes */
 }
 
-/* 3. bloks: apraksts + meta zem kreisās kolonnas */
+/* Zem kreisās kolonnas – apraksts + meta rinda */
 .weather-main-right {
   grid-area: right;
   display: flex;
@@ -238,13 +242,15 @@
   color: var(--text-muted);
 }
 
-    .weather-forecast-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.4rem;
-      margin-top: 0.4rem;
-      font-size: 0.8rem;
-    }
+/* Prognoze paliek kā iepriekš */
+.weather-forecast-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+}
+
 
     .forecast-item {
       background: rgba(15, 23, 42, 0.82);
