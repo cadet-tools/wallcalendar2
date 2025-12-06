@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sienas kalendārs — info panelis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --accent: #437e12;
+      --accent-soft: rgba(67, 126, 18, 0.45);
+      --text: #f9fafb;
+      --text-muted: #cbd5f5;
+      --panel: rgba(5, 10, 25, 0.78);
+      --panel-soft: rgba(7, 12, 30, 0.9);
+      --border-soft: rgba(148, 163, 184, 0.6);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --blur: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #00000040;
+      overflow: hidden; /* panelis bez skroļiem */
+    }
+
+    /* ===== FONA SLAIDŠOVS ===== */
+    #bg-slideshow {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      overflow: hidden;
+    }
+
+    #bg-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.8) saturate(1.15);
+      transform: scale(1.08);
+      transition: opacity 0.9s ease, transform 11s ease-out;
+      opacity: 0;
+    }
+
+    #bg-photo.visible {
+      opacity: 1;
+      transform: scale(1.02);
+    }
+
+    /* tumšā maska virs fona, lai teksts ir salasāms */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.35), transparent 55%), linear-gradient(to right, rgb(3 7 18 / 67%) 0%, rgb(3 7 18 / 65%) 40%, rgb(3 7 18 / 57%) 100%);
+      pointer-events: none;
+    }
+
+    /* ===== GALVENAIS IZZKĀRTOJUMS ===== */
+.wall {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    width: 97vw;
+    max-width: 1990px;
+    margin: 0 auto;
+    padding: 1.8rem 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+    gap: 2rem;
+}
+
+
+    .left-column {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 1.4rem;
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-height: 0;
+      
+    }
+
+
+
+
+
+
+
+    .card {
+      background: rgb(5 10 25 / 17%);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      backdrop-filter: blur(var(--blur));
+      box-shadow: var(--shadow);
+      padding: 1.2rem 1.4rem;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    /* ===== PULKSTENIS + DATUMS ===== */
+    .clock-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      opacity: 0.8;
+      text-align: center;
+    }
+
+    .clock-time {
+      font-size: clamp(3.2rem, 5.4vw, 4rem);
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .clock-date {
+      font-size: clamp(1rem, 1.7vw, 1.3rem);
+      color: var(--text-muted);
+    }
+
+    .clock-location {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-top: 0.25rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== LAIKAPSTĀKĻI ===== */
+    .weather-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      opacity: 0.8;
+    }
+
+    .weather-main {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1.6fr);
+      gap: 1.2rem;
+      align-items: flex-start;
+    }
+
+    .weather-main-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.15rem;
+    }
+
+    .weather-temp-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+    }
+
+    .weather-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .weather-temp {
+      font-size: 2.4rem;
+      font-weight: 500;
+    }
+
+    .weather-daynight {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    /* 2. kolona – papildu dati */
+    .weather-extra {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .weather-extra span {
+      white-space: nowrap;
+    }
+
+    /* 3. kolona – apraksts + meta */
+    .weather-main-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+      font-size: 0.95rem;
+    }
+
+    .weather-desc {
+      color: var(--text-muted);
+    }
+
+    .weather-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .weather-forecast-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+      font-size: 0.8rem;
+    }
+
+    .forecast-item {
+      background: rgba(15, 23, 42, 0.82);
+      border-radius: var(--radius-md);
+      padding: 0.4rem 0.5rem;
+      text-align: center;
+    }
+
+    .forecast-day {
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+    }
+
+    .forecast-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0.1rem auto;
+    }
+
+    .forecast-temp {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .forecast-details {
+      margin-top: 0.1rem;
+      font-size: 0.72rem;
+      line-height: 1.25;
+      color: var(--text-muted);
+    }
+
+
+    /* ===== VĀRDA DIENAS + ZIŅAS ===== */
+    .bottom-left {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 0.8rem;
+      min-height: 0;
+    }
+
+    .nameday-card {
+      padding: 0.9rem 1.1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 0.9rem;
+      background: rgb(5 10 25 / 17%);
+    }
+
+    .nameday-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .nameday-names {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .news-card {
+      padding: 0.9rem 1.1rem;
+      border-radius: var(--radius-md);
+      background: rgb(5 10 25 / 17%);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      
+    }
+
+    .news-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.3rem;
+    }
+
+    .news-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .news-updated {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .news-list {
+      list-style: none;
+      margin-top: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      overflow: hidden;
+    }
+
+    .news-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid rgba(30, 64, 175, 0.4);
+    }
+
+    .news-item:last-child {
+      border-bottom: none;
+    }
+
+    .news-title-line {
+      font-size: 0.85rem;
+      line-height: 1.25;
+    }
+
+    .news-title-line a {
+      color: #e5e7eb;
+      text-decoration: none;
+    }
+
+    .news-title-line a:hover {
+      text-decoration: underline;
+    }
+
+    .news-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ===== KALENDĀRI ===== */
+    .calendar-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-height: 0;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .calendar-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .calendar-legend {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 999px;
+    }
+
+    .dot-me {
+      background: linear-gradient(135deg, var(--accent), #a3e635);
+    }
+
+    .dot-partner {
+      background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+    }
+
+    .calendar-frame-wrap {
+      flex: 1;
+      min-height: 0;
+      bbackground: rgb(5 10 25 / 17%);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      box-shadow: var(--shadow);
+      padding: 0.7rem;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.6rem;
+    }
+
+    .calendar-col {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      gap: 0.25rem;
+    }
+
+    .calendar-name {
+      /*font-size: 0.78rem;*/
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+
+
+    .calendar-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      /* ja gribi mazliet “zoom out”:
+      transform: scale(0.95);
+      transform-origin: top left;
+      */
+    }
+    .weather-main-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.15rem;
+    }
+
+    .weather-temp-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+    }
+
+    .weather-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .weather-daynight {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 1100px) {
+      .wall {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+      }
+      .right-column {
+        min-height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- FONA SLAIDŠOVS -->
+  <div id="bg-slideshow">
+    <img id="bg-photo" src="" alt="Fona attēls" />
+  </div>
+
+  <main class="wall">
+    <!-- KREISĀ KOLONNA -->
+    <section class="left-column">
+      <!-- Pulkstenis + datums -->
+      <section class="card clock-card">
+        <div class="clock-time" id="clock-time">00:00</div>
+        <div class="clock-date" id="clock-date">Pirmdiena, 1. janvāris 2025. g.</div>
+        <div class="clock-location">Rīga, Latvija</div>
+      </section>
+
+  
+         <!-- Laikapstākļi -->
+      <section class="card weather-card">
+        <div class="card-title">Laikapstākļi</div>
+        <div class="weather-main">
+          <!-- 1. kolona: ikona + temp + diena/nakts -->
+          <div class="weather-main-left">
+            <div class="weather-temp-row">
+              <span id="weather-icon" class="weather-icon">🌡️</span>
+              <span class="weather-temp" id="weather-temp">--°C</span>
+            </div>
+            <div id="weather-daynight" class="weather-daynight">Diena / nakts</div>
+          </div>
+
+          <!-- 2. kolona: papildu dati (nokrišņi, mitrums, vējš) -->
+          <div id="weather-extra" class="weather-extra">
+            <span>Nokrišņi: -</span>
+            <span>Mitrums: -</span>
+            <span>Vējš: -</span>
+          </div>
+
+          <!-- 3. kolona: apraksts + meta rinda -->
+          <div class="weather-main-right">
+            <div id="weather-desc" class="weather-desc">Ielādē...</div>
+            <div id="weather-meta" class="weather-meta">Rīga • ...</div>
+          </div>
+        </div>
+
+        <div class="weather-forecast-row" id="weather-forecast"></div>
+      </section>
+
+
+
+      <!-- Vārda dienas + ziņas -->
+      <section class="bottom-left">
+        <div class="nameday-card">
+          <div class="nameday-label">Šodien vārda dienu svin:</div>
+          <div class="nameday-names" id="nameday-names">Ielādē vārda dienas...</div>
+        </div>
+
+        <div class="news-card">
+          <div class="news-header">
+            <div class="news-title">Jaunākās ziņas — LSM</div>
+            <div class="news-updated" id="news-updated"></div>
+          </div>
+          <ul class="news-list" id="news-list">
+            <li class="news-item">
+              <div class="news-title-line">Ielādē ziņas...</div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </section>
+
+    <!-- LABĀ KOLONNA — 2 kalendāri (iframe) -->
+    <section class="right-column">
+ 
+
+        <div class="calendar-frame-wrap">
+          <div class="calendar-col">
+            <div class="calendar-name">Jāņa kalendārs</div>
+      <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FRiga&showTz=0&showPrint=0&showTitle=0&src=amFuaXNlZ2xpczZAZ21haWwuY29t&src=ZDk1ZWUxNTI0NWM0NTVjNTA0NGJjZTM3YWYyM2JiMTk3ZmM2NTZmYWE1ZmYxZGUxZDYxZDg1MWZmOTYzZWI1YUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&src=NW1sc3Q3bWtza2NlamNwajUxZWZ1c21yYjBAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=YjM1NjAyOWVjMDRkOTQ0YjZlMmIyM2Y0OTkyZDlkMTk1OWI5ODZjZDNkNjAxYjY5NTY0ZWMxMmM1MDMzYzU1MUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&src=dThxb21xNDkydmRuOG4zbjFqZTNqbW43Zm9AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=Y2xhc3Nyb29tMTA2MTg2MjQyNjY2MTM4MTc3MTU4QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20&src=cXVobGZkbGJnM2dyMmc5bnBpMHFocDY4NzRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=YWU3cTd2aTZjaWZtNWtxZnZyMWFscXYxYWNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=bHYubGF0dmlhbiNob2xpZGF5QGdyb3VwLnYuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%23039be5&color=%237986cb&color=%237986cb&color=%23e4c441&color=%237986cb&color=%23e67c73&color=%23d50000&color=%233f51b5&color=%23009688" style="border-width:0; border-radius:15px" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
+
+
+          </div>
+
+          <div class="calendar-col">
+            <div class="calendar-name">Daigas kalendārs</div>
+           <!-- <iframe
+              class="calendar-frame"
+              src="YOUR_DRAUDZENE_EMBED_URL_TE"
+              frameborder="0"
+              scrolling="no"
+            ></iframe>-->
+<img src="https://previews.123rf.com/images/kibsri/kibsri1212/kibsri121200009/16679069-christmas-404-error-penguin-family.jpg" alt="notfound" width="100%" height="95%" style="border-radius:15px">
+          </div>
+        </div>
+
+        
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // ========================
+    // PULKSTENIS + DATUMS
+    // ========================
+    (function setupClock() {
+      const timeEl = document.getElementById("clock-time");
+      const dateEl = document.getElementById("clock-date");
+
+      const days = [
+        "Svētdiena",
+        "Pirmdiena",
+        "Otrdiena",
+        "Trešdiena",
+        "Ceturtdiena",
+        "Piektdiena",
+        "Sestdiena",
+      ];
+      const months = [
+        "janvāris",
+        "februāris",
+        "marts",
+        "aprīlis",
+        "maijs",
+        "jūnijs",
+        "jūlijs",
+        "augusts",
+        "septembris",
+        "oktobris",
+        "novembris",
+        "decembris",
+      ];
+
+      function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        timeEl.textContent = `${h}:${m}`;
+
+        const weekday = days[now.getDay()];
+        const d = now.getDate();
+        const monthName = months[now.getMonth()];
+        const y = now.getFullYear();
+        dateEl.textContent = `${weekday}, ${d}. ${monthName} ${y}. g.`;
+      }
+
+      updateClock();
+      setInterval(updateClock, 1000);
+    })();
+
+
+  // ========================
+  // LAIKAPSTĀKĻI — Open-Meteo
+  // ========================
+  (function setupWeather() {
+    const LAT = 56.95;
+    const LON = 24.11;
+    const city = "Rīga";
+
+    const tempEl = document.getElementById("weather-temp");
+    const descEl = document.getElementById("weather-desc");
+    const metaEl = document.getElementById("weather-meta");
+    const forecastWrap = document.getElementById("weather-forecast");
+    const iconEl = document.getElementById("weather-icon");
+    const dayNightEl = document.getElementById("weather-daynight");
+    const extraEl = document.getElementById("weather-extra");
+
+    function mapWeatherCode(code, isDay = true) {
+      let icon = isDay ? "🌡️" : "🌙";
+      let label = "Laikapstākļi";
+      let long = "Nav detalizēta apraksta šim kodam.";
+
+      switch (code) {
+        case 0:
+          icon = isDay ? "☀️" : "🌙";
+          label = "Skaidrs";
+          long = "Skaidras debesis, nokrišņi nav gaidāmi.";
+          break;
+        case 1:
+          icon = isDay ? "🌤️" : "🌙";
+          label = "Pārsvarā skaidrs";
+          long = "Pārsvarā skaidras debesis ar atsevišķiem mākoņiem.";
+          break;
+        case 2:
+          icon = "🌤️";
+          label = "Daļēji mākoņains";
+          long = "Daļēji mākoņainas debesis, saule un mākoņi mijas.";
+          break;
+        case 3:
+          icon = "☁️";
+          label = "Apmācies";
+          long = "Pilnīgi apmākušās debesis, saule praktiski nav redzama.";
+          break;
+        case 45:
+          icon = "🌫️";
+          label = "Migla";
+          long = "Migla, redzamība ir ievērojami samazināta.";
+          break;
+        case 48:
+          icon = "🌫️";
+          label = "Apledojuma migla";
+          long = "Migla ar sasalstošu mitrumu un apledojumu uz virsmām.";
+          break;
+        case 51:
+          icon = "🌦️";
+          label = "Viegls smidzinošs lietus";
+          long = "Viegls smidzinošs lietus ar nelielu intensitāti.";
+          break;
+        case 53:
+          icon = "🌦️";
+          label = "Mērens smidzinošs lietus";
+          long = "Mērens smidzinošs lietus.";
+          break;
+        case 55:
+          icon = "🌦️";
+          label = "Stiprs smidzinošs lietus";
+          long = "Stiprs smidzinošs lietus ar lielāku nokrišņu intensitāti.";
+          break;
+        case 56:
+          icon = "🌧️";
+          label = "Viegls sasalstošs smidzinošs lietus";
+          long = "Viegls sasalstošs smidzinošs lietus, iespējama apledošana.";
+          break;
+        case 57:
+          icon = "🌧️";
+          label = "Stiprs sasalstošs smidzinošs lietus";
+          long = "Stiprs sasalstošs smidzinošs lietus ar izteiktu apledošanas risku.";
+          break;
+        case 61:
+          icon = "🌧️";
+          label = "Viegls lietus";
+          long = "Viegls ilgstošs lietus ar nelielu intensitāti.";
+          break;
+        case 63:
+          icon = "🌧️";
+          label = "Mērens lietus";
+          long = "Mērens ilgstošs lietus.";
+          break;
+        case 65:
+          icon = "🌧️";
+          label = "Stiprs lietus";
+          long = "Stiprs ilgstošs lietus ar lielu nokrišņu daudzumu.";
+          break;
+        case 66:
+          icon = "🌧️";
+          label = "Viegls sasalstošs lietus";
+          long = "Viegls sasalstošs lietus, iespējama apledošana uz ceļiem un ietvēm.";
+          break;
+        case 67:
+          icon = "🌧️";
+          label = "Stiprs sasalstošs lietus";
+          long = "Stiprs sasalstošs lietus ar ievērojamu apledošanas risku.";
+          break;
+        case 71:
+          icon = "❄️";
+          label = "Viegls sniegs";
+          long = "Viegls snigšanas periods ar nelielu sniega segu.";
+          break;
+        case 73:
+          icon = "❄️";
+          label = "Mērens sniegs";
+          long = "Mērens snigšanas periods, sniega sega pakāpeniski pieaug.";
+          break;
+        case 75:
+          icon = "❄️";
+          label = "Stiprs sniegs";
+          long = "Stiprs snigšanas periods, sniega sega pieaug strauji.";
+          break;
+        case 77:
+          icon = "❄️";
+          label = "Sniega graudi";
+          long = "Sniega graudi, parasti bez būtiskas sniega segas veidošanās.";
+          break;
+        case 80:
+          icon = "🌧️";
+          label = "Vieglas lietusgāzes";
+          long = "Īslaicīgas vieglas lietusgāzes.";
+          break;
+        case 81:
+          icon = "🌧️";
+          label = "Mērenas lietusgāzes";
+          long = "Īslaicīgas mērenas lietusgāzes.";
+          break;
+        case 82:
+          icon = "🌧️";
+          label = "Stipras lietusgāzes";
+          long = "Īslaicīgas ļoti stipras lietusgāzes ar lielu nokrišņu intensitāti.";
+          break;
+        case 85:
+          icon = "❄️";
+          label = "Vieglas sniega brāzmas";
+          long = "Īslaicīgas vieglas sniega brāzmas.";
+          break;
+        case 86:
+          icon = "❄️";
+          label = "Stipras sniega brāzmas";
+          long = "Īslaicīgas stipras sniega brāzmas, iespējami puteņi.";
+          break;
+        case 95:
+          icon = "⛈️";
+          label = "Pērkona negaiss";
+          long = "Pērkona negaiss ar lietu, neliela vai mērena intensitāte.";
+          break;
+        case 96:
+          icon = "⛈️";
+          label = "Pērkona negaiss ar krusu";
+          long = "Pērkona negaiss ar nelielu vai mērenu krusu.";
+          break;
+        case 99:
+          icon = "⛈️";
+          label = "Stiprs pērkona negaiss ar krusu";
+          long = "Stiprs pērkona negaiss ar izteiktu krusu.";
+          break;
+      }
+
+      return { label, long, icon };
+    }
+
+    async function loadWeather() {
+      try {
+        const url =
+          `https://api.open-meteo.com/v1/forecast` +
+          `?latitude=${LAT}&longitude=${LON}` +
+          `&current_weather=true` +
+          `&hourly=relativehumidity_2m,precipitation_probability,wind_speed_10m` +
+          `&daily=weathercode,temperature_2m_max,temperature_2m_min` +
+          `&timezone=Europe%2FRiga`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Tīkla kļūda");
+        const data = await res.json();
+
+        const current = data.current_weather;
+        const daily = data.daily;
+        const hourly = data.hourly || {};
+
+        if (!current) {
+          tempEl.textContent = "--°C";
+          descEl.textContent = "Nav datu par pašreizējiem laikapstākļiem.";
+          metaEl.textContent = city;
+          forecastWrap.textContent = "";
+          return;
+        }
+
+        const t = Math.round(current.temperature);
+        const info = mapWeatherCode(current.weathercode, current.is_day === 1);
+
+        // 1. kolona
+        tempEl.textContent = `${t}°C`;
+        if (iconEl) iconEl.textContent = info.icon;
+
+        const isDay = current.is_day === 1;
+        if (dayNightEl) {
+          dayNightEl.textContent = `${isDay ? "Diena" : "Nakts"} • ${info.label}`;
+        }
+
+        // 3. kolona apraksts
+        descEl.textContent = info.long;
+
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+
+        // ---------- papildu dati no hourly ----------
+        let humidity = null;
+        let precipProb = null;
+        let windSpeed =
+          typeof current.windspeed === "number" ? current.windspeed : null;
+
+        const times = Array.isArray(hourly.time) ? hourly.time : [];
+        if (times.length && current.time) {
+          let idx = times.indexOf(current.time);
+          if (idx === -1) idx = 0;
+
+          if (Array.isArray(hourly.relativehumidity_2m)) {
+            humidity = hourly.relativehumidity_2m[idx];
+          }
+          if (Array.isArray(hourly.precipitation_probability)) {
+            precipProb = hourly.precipitation_probability[idx];
+          }
+          if (Array.isArray(hourly.wind_speed_10m)) {
+            windSpeed = hourly.wind_speed_10m[idx];
+          }
+        }
+
+        // 2. kolona – rakstām stabiņā
+        if (extraEl) {
+          const lines = [];
+          if (precipProb != null)
+            lines.push(`Nokrišņi: ${Math.round(precipProb)}%`);
+          if (humidity != null)
+            lines.push(`Mitrums: ${Math.round(humidity)}%`);
+          if (windSpeed != null)
+            lines.push(`Vējš: ${Math.round(windSpeed)} km/h`);
+          extraEl.innerHTML = lines.length
+            ? lines.map((txt) => `<span>${txt}</span>`).join("")
+            : "<span>Papildu dati nav pieejami.</span>";
+        }
+
+        // šodienas max/min
+        let todayIndex = 0;
+        let tMaxToday = null;
+        let tMinToday = null;
+
+        if (daily && Array.isArray(daily.time) && daily.time.length) {
+          const currentDateStr = current.time ? current.time.slice(0, 10) : null;
+          if (currentDateStr) {
+            const foundIndex = daily.time.findIndex((d) => d === currentDateStr);
+            if (foundIndex !== -1) todayIndex = foundIndex;
+          }
+
+          if (
+            Array.isArray(daily.temperature_2m_max) &&
+            typeof daily.temperature_2m_max[todayIndex] === "number"
+          )
+            tMaxToday = Math.round(daily.temperature_2m_max[todayIndex]);
+
+          if (
+            Array.isArray(daily.temperature_2m_min) &&
+            typeof daily.temperature_2m_min[todayIndex] === "number"
+          )
+            tMinToday = Math.round(daily.temperature_2m_min[todayIndex]);
+        }
+
+        let progText = "";
+        if (tMaxToday !== null && tMinToday !== null) {
+          progText = ` • Šodien prognoze: D: ${tMaxToday}° / N: ${tMinToday}°`;
+        }
+
+        // 3. kolonas apakšējā rinda – tikai pilsēta + atjaunošana + prognoze
+        metaEl.textContent = `${city} • Atjaunināts ${hh}:${mm}${progText}`;
+
+        // ---------- prognoze nākamajām 4 dienām ----------
+        if (!daily || !daily.time || !daily.time.length) {
+          forecastWrap.textContent = "Nav prognozes datu.";
+          return;
+        }
+
+        const weekdayShort = ["Sv", "Pr", "Ot", "Tr", "Ce", "Pk", "Se"];
+        forecastWrap.innerHTML = "";
+
+        const startIdx = Math.min(todayIndex + 1, daily.time.length - 1);
+        const endIdx = Math.min(startIdx + 4, daily.time.length);
+
+        for (let i = startIdx; i < endIdx; i++) {
+          const dateStr = daily.time[i];
+          const dt = new Date(dateStr + "T12:00:00");
+          const dayName = weekdayShort[dt.getDay()];
+          const tMax = Math.round(daily.temperature_2m_max[i]);
+          const tMin = Math.round(daily.temperature_2m_min[i]);
+          const code = daily.weathercode[i];
+          const infoDay = mapWeatherCode(code, true);
+
+          const isTomorrow = i === startIdx;
+          const dayLabel = isTomorrow ? "Rīt" : dayName;
+
+          const div = document.createElement("div");
+          div.className = "forecast-item";
+          div.innerHTML = `
+            <div class="forecast-day">${dayLabel}</div>
+            <div class="forecast-icon">${infoDay.icon}</div>
+            <div class="forecast-temp">D: ${tMax}° / N: ${tMin}°</div>
+            <div class="forecast-details">${infoDay.long}</div>
+          `;
+          forecastWrap.appendChild(div);
+        }
+      } catch (e) {
+        console.error(e);
+        descEl.textContent = "Neizdevās ielādēt laikapstākļus.";
+        metaEl.textContent = "Pārbaudi internetu";
+        if (extraEl) extraEl.innerHTML = "<span>Papildu dati nav pieejami.</span>";
+        forecastWrap.textContent = "";
+      }
+    }
+
+    loadWeather();
+    setInterval(loadWeather, 15 * 60 * 1000);
+  })();
+
+
+
+
+
+    // ========================
+    // VĀRDA DIENAS
+    // ========================
+    (function setupNamedays() {
+      const targetEl = document.getElementById("nameday-names");
+      const DATA_URL =
+        "https://gist.githubusercontent.com/skakri/5225055/raw/8ee27d7f441b9ece8301182bcbb1c1985b01f65a/vardadienas.json";
+
+      async function loadNamedays() {
+        try {
+          const res = await fetch(DATA_URL);
+          if (!res.ok) throw new Error("Tīkla kļūda");
+          const data = await res.json();
+
+          const now = new Date();
+          const monthIndex = now.getMonth();
+          const dayIndex = now.getDate() - 1;
+
+          const monthData = data[monthIndex] || {};
+          const names = monthData[String(dayIndex)] || [];
+          if (!names.length) {
+            targetEl.textContent = "Nav datu par vārda dienām.";
+            return;
+          }
+          targetEl.textContent = names.join(", ");
+        } catch (e) {
+          console.error(e);
+          targetEl.textContent = "Neizdevās ielādēt vārda dienu sarakstu.";
+        }
+      }
+
+      loadNamedays();
+      setInterval(loadNamedays, 24 * 60 * 60 * 1000);
+    })();
+
+    // ========================
+    // JAUNĀKĀS ZIŅAS — LSM (AllOrigins)
+    // ========================
+    (function setupNews() {
+      const RSS_URL = "https://www.lsm.lv/rss/?lang=lv&catid=14";
+      const listEl = document.getElementById("news-list");
+      const updatedEl = document.getElementById("news-updated");
+
+      async function loadNews() {
+        try {
+          const proxyUrl =
+            "https://api.allorigins.win/raw?url=" + encodeURIComponent(RSS_URL);
+
+          const res = await fetch(proxyUrl);
+          if (!res.ok) throw new Error("Tīkla kļūda (RSS proxy)");
+          const text = await res.text();
+
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(text, "application/xml");
+          const items = Array.from(xml.querySelectorAll("item")).slice(0, 6);
+
+          listEl.innerHTML = "";
+
+          if (!items.length) {
+            listEl.innerHTML =
+              '<li class="news-item"><div class="news-title-line">Nav ziņu.</div></li>';
+            updatedEl.textContent = "";
+            return;
+          }
+
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, "0");
+          const mm = String(now.getMinutes()).padStart(2, "0");
+          updatedEl.textContent = `Atjaunots ${hh}:${mm}`;
+
+          items.forEach((item) => {
+            const title = item.querySelector("title")?.textContent || "(bez nosaukuma)";
+            const link = item.querySelector("link")?.textContent || "#";
+            const pubDate = item.querySelector("pubDate")?.textContent || "";
+            let timeStr = "";
+            if (pubDate) {
+              const d = new Date(pubDate);
+              if (!isNaN(d.getTime())) {
+                const h = String(d.getHours()).padStart(2, "0");
+                const m = String(d.getMinutes()).padStart(2, "0");
+                timeStr = `${h}:${m}`;
+              }
+            }
+
+            const li = document.createElement("li");
+            li.className = "news-item";
+            li.innerHTML = `
+              <div class="news-title-line"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+              ${
+                timeStr
+                  ? `<div class="news-meta">${timeStr}</div>`
+                  : '<div class="news-meta">&nbsp;</div>'
+              }
+            `;
+            listEl.appendChild(li);
+          });
+        } catch (e) {
+          console.error(e);
+          listEl.innerHTML =
+            '<li class="news-item"><div class="news-title-line">Neizdevās ielādēt LSM RSS (CORS/proxy problēma).</div></li>';
+          updatedEl.textContent = "";
+        }
+      }
+
+      loadNews();
+      setInterval(loadNews, 10 * 60 * 1000);
+    })();
+
+    // ========================
+    // FONA ATTĒLI
+    // ========================
+    (function setupBackground() {
+      const imgEl = document.getElementById("bg-photo");
+      if (!imgEl) return;
+
+      const urls = [
+        "https://images.pexels.com/photos/1303081/pexels-photo-1303081.jpeg?_gl=1*11azxqc*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "https://images.pexels.com/photos/639110/pexels-photo-639110.jpeg?_gl=1*118tij6*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "https://images.pexels.com/photos/1656564/pexels-photo-1656564.jpeg?_gl=1*djpdun*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "https://images.pexels.com/photos/1028723/pexels-photo-1028723.jpeg?_gl=1*djpdun*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "https://images.pexels.com/photos/1708601/pexels-photo-1708601.jpeg?_gl=1*dsrvdd*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "hhttps://images.pexels.com/photos/1556679/pexels-photo-1556679.jpeg?_gl=1*11jpyho*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw",
+        "https://images.pexels.com/photos/735423/pexels-photo-735423.jpeg?_gl=1*11jpyho*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjQ5ODQ4OTkkbzEkZzEkdDE3NjQ5ODQ5MzIkajI3JGwwJGgw"
+      ];
+
+      let index = 0;
+
+      function showBackground(i) {
+        const src = urls[i % urls.length];
+        imgEl.classList.remove("visible");
+        setTimeout(() => {
+          imgEl.src = src;
+          imgEl.onload = () => imgEl.classList.add("visible");
+        }, 80);
+      }
+
+      showBackground(index);
+      setInterval(() => {
+        index = (index + 1) % urls.length;
+        showBackground(index);
+      }, 60000);
+    })();
+  </script>
+</body>
+</html>
