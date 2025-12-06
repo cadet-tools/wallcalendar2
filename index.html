@@ -990,19 +990,19 @@
      // ========================
     // KALENDĀRA AUTO-ATJAUNOŠANA
     // ========================
-    (function autoReloadCalendar() {
-      const iframe = document.querySelector(".calendar-frame");
-      if (!iframe) return;
+   // (function autoReloadCalendar() {
+   //   const iframe = document.querySelector(".calendar-frame");
+     // if (!iframe) return;
 
       // paņem sākotnējo URL no HTML (bez cb parametra)
-      const originalSrc = iframe.getAttribute("src");
-      const sep = originalSrc.includes("?") ? "&" : "?";
+      //const originalSrc = iframe.getAttribute("src");
+      //const sep = originalSrc.includes("?") ? "&" : "?";
 
-      setInterval(() => {
+      //setInterval(() => {
         // pievienojam timestamp, lai apietu kešu
-        iframe.src = originalSrc + sep + "cb=" + Date.now();
-      }, 60 * 60 * 1000); // 1 stunda = 60 min * 60 sek * 1000 ms
-    })();
+        //iframe.src = originalSrc + sep + "cb=" + Date.now();
+      //}, 60 * 60 * 1000); // 1 stunda = 60 min * 60 sek * 1000 ms
+    //})();
   </script>
 </body>
 </html>
