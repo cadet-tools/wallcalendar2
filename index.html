@@ -153,80 +153,90 @@
       color: var(--text-muted);
     }
 
-    /* ===== LAIKAPSTĀKĻI ===== */
-    .weather-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      opacity: 0.8;
-    }
+  /* ===== LAIKAPSTĀKĻI ===== */
+.weather-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  opacity: 0.8;
+}
 
-    .weather-main {
-      display: grid;
-      grid-template-columns: auto auto minmax(0, 1.6fr);
-      gap: 1.2rem;
-      align-items: flex-start;
-    }
+/* Te pārtaisām layoutu */
+.weather-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.6fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "left extra"
+    "right extra";    /* right ir zem left, extra pa labi abās rindās */
+  column-gap: 1.2rem;
+  row-gap: 0.4rem;
+  align-items: flex-start;
+}
 
-    .weather-main-left {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.15rem;
-    }
+/* 1. kolona: ikona + temp + Diena/Nakts */
+.weather-main-left {
+  grid-area: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
 
-    .weather-temp-row {
-      display: flex;
-      align-items: baseline;
-      gap: 0.35rem;
-    }
+.weather-temp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
 
-    .weather-icon {
-      font-size: 1.8rem;
-      line-height: 1;
-    }
+.weather-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
 
-    .weather-temp {
-      font-size: 2.4rem;
-      font-weight: 500;
-    }
+.weather-temp {
+  font-size: 2.4rem;
+  font-weight: 500;
+}
 
-    .weather-daynight {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-    }
+.weather-daynight {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
 
-    /* 2. kolona – papildu dati */
-    .weather-extra {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
+/* 2. kolona: papildus dati (nokrišņi, mitrums, vējš) */
+.weather-extra {
+  grid-area: extra;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
 
-    .weather-extra span {
-      white-space: nowrap;
-    }
+.weather-extra span {
+  white-space: nowrap;
+}
 
-    /* 3. kolona – apraksts + meta */
-    .weather-main-right {
-      display: flex;
-      flex-direction: column;
-      gap: 0.12rem;
-      font-size: 0.95rem;
-    }
+/* 3. bloks: apraksts + meta zem kreisās kolonnas */
+.weather-main-right {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  font-size: 0.95rem;
+}
 
-    .weather-desc {
-      color: var(--text-muted);
-    }
+.weather-desc {
+  color: var(--text-muted);
+}
 
-    .weather-meta {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
+.weather-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
 
     .weather-forecast-row {
       display: grid;
