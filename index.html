@@ -511,7 +511,7 @@
     <section class="right-column">
       <div class="calendar-frame-wrap">
         <div class="calendar-col">
-          <div class="calendar-name">TV sienas kalendārs</div>
+        
 
           <!-- ŠEIT IELIEC hometvhometv KALENDĀRA EMBED LINKU -->
           <iframe
@@ -967,6 +967,23 @@
         index = (index + 1) % urls.length;
         showBackground(index);
       }, 60000);
+    })();
+
+     // ========================
+    // KALENDĀRA AUTO-ATJAUNOŠANA
+    // ========================
+    (function autoReloadCalendar() {
+      const iframe = document.querySelector(".calendar-frame");
+      if (!iframe) return;
+
+      // paņem sākotnējo URL no HTML (bez cb parametra)
+      const originalSrc = iframe.getAttribute("src");
+      const sep = originalSrc.includes("?") ? "&" : "?";
+
+      setInterval(() => {
+        // pievienojam timestamp, lai apietu kešu
+        iframe.src = originalSrc + sep + "cb=" + Date.now();
+      }, 60 * 1000); // 60 000 ms = 1 minūte
     })();
   </script>
 </body>
