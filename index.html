@@ -50,20 +50,35 @@
       overflow: hidden;
     }
 
-    #bg-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: brightness(0.8) saturate(1.15);
-      transform: scale(1.08);
-      transition: opacity 0.9s ease, transform 11s ease-out;
-      opacity: 0;
-    }
 
-    #bg-photo.visible {
-      opacity: 1;
-      transform: scale(1.02);
-    }
+#bg-slideshow {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+}
+
+/* abas fona bildes viena uz otras */
+.bg-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.8) saturate(1.15);
+  transform: scale(1.08);
+  opacity: 0;
+  transition: opacity 2.4s ease, transform 18s ease-out;
+  will-change: opacity, transform;
+}
+
+/* tā, kas “aktīvā” */
+.bg-photo.visible {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+
 
     /* tumšā maska virs fona, lai teksts ir salasāms */
     body::before {
@@ -442,9 +457,10 @@
 </head>
 <body>
   <!-- FONA SLAIDŠOVS -->
-  <div id="bg-slideshow">
-    <img id="bg-photo" src="" alt="Fona attēls" />
-  </div>
+<div id="bg-slideshow">
+  <img id="bg-photo-1" class="bg-photo visible" src="" alt="Fona attēls 1" />
+  <img id="bg-photo-2" class="bg-photo" src="" alt="Fona attēls 2" />
+</div>
 
   <main class="wall">
     <!-- KREISĀ KOLONNA -->
@@ -952,40 +968,70 @@
       setInterval(loadNews, 10 * 60 * 1000);
     })();
 
-    // ========================
-    // FONA ATTĒLI
-    // ========================
-    (function setupBackground() {
-      const imgEl = document.getElementById("bg-photo");
-      if (!imgEl) return;
+  // ========================
+// FONA ATTĒLI — maigs crossfade
+// ========================
+(function setupBackground() {
+  const urls = [
+    "https://images.pexels.com/photos/1303081/pexels-photo-1303081.jpeg",
+    "https://images.pexels.com/photos/639110/pexels-photo-639110.jpeg",
+    "https://images.pexels.com/photos/1656564/pexels-photo-1656564.jpeg",
+    "https://images.pexels.com/photos/1028723/pexels-photo-1028723.jpeg",
+    "https://images.pexels.com/photos/1708601/pexels-photo-1708601.jpeg",
+    "https://images.pexels.com/photos/1556679/pexels-photo-1556679.jpeg",
+    "https://images.pexels.com/photos/735423/pexels-photo-735423.jpeg"
+  ];
 
-      const urls = [
-        "https://images.pexels.com/photos/1303081/pexels-photo-1303081.jpeg",
-        "https://images.pexels.com/photos/639110/pexels-photo-639110.jpeg",
-        "https://images.pexels.com/photos/1656564/pexels-photo-1656564.jpeg",
-        "https://images.pexels.com/photos/1028723/pexels-photo-1028723.jpeg",
-        "https://images.pexels.com/photos/1708601/pexels-photo-1708601.jpeg",
-        "https://images.pexels.com/photos/1556679/pexels-photo-1556679.jpeg",
-        "https://images.pexels.com/photos/735423/pexels-photo-735423.jpeg"
-      ];
+  const img1 = document.getElementById("bg-photo-1");
+  const img2 = document.getElementById("bg-photo-2");
+  if (!img1 || !img2 || !urls.length) return;
 
-      let index = 0;
+  let currentIndex = 0;
+  let showingFirst = true;
 
-      function showBackground(i) {
-        const src = urls[i % urls.length];
-        imgEl.classList.remove("visible");
-        setTimeout(() => {
-          imgEl.src = src;
-          imgEl.onload = () => imgEl.classList.add("visible");
-        }, 80);
-      }
+  function setImage(img, url, cb) {
+    // uzliek onload callback
+    img.onload = () => {
+      img.onload = null;
+      cb && cb();
+    };
 
-      showBackground(index);
-      setInterval(() => {
-        index = (index + 1) % urls.length;
-        showBackground(index);
-      }, 60000);
-    })();
+    img.src = url;
+
+    // ja bilde jau kešā (load notiek momentā)
+    if (img.complete) {
+      img.onload = null;
+      cb && cb();
+    }
+  }
+
+  function switchBackground() {
+    const nextIndex = (currentIndex + 1) % urls.length;
+    const nextUrl = urls[nextIndex];
+
+    const incoming = showingFirst ? img2 : img1;   // kura nāks iekšā
+    const outgoing = showingFirst ? img1 : img2;   // kura pašlaik redzama
+
+    // ielādē nākamo fonu fona režīmā
+    setImage(incoming, nextUrl, () => {
+      // kad jaunā gatava – crossfade
+      outgoing.classList.remove("visible");
+      incoming.classList.add("visible");
+
+      currentIndex = nextIndex;
+      showingFirst = !showingFirst;
+    });
+  }
+
+  // sākumā uzliek pirmo bildi
+  setImage(img1, urls[0], () => {
+    img1.classList.add("visible");
+  });
+
+  // maina ik pēc 60s (var mainīt pēc vajadzības)
+  setInterval(switchBackground, 60000);
+})();
+
 
      // ========================
     // KALENDĀRA AUTO-ATJAUNOŠANA
