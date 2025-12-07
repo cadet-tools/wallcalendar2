@@ -353,6 +353,7 @@
       flex-direction: column;
       height: 100%;
       min-height: 0;
+       padding: 0; /* ja gribi, lai bilde iet no malas līdz malai */
     }
 
     .news-header {
@@ -458,7 +459,32 @@
   /* NEKĀDU transform šeit */
 }
 
-    @media (max-width: 1100px) {
+   .news-slideshow {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+/* Attēli kartes iekšienē */
+.news-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+
+.news-slide.visible {
+  opacity: 1;
+}
+ @media (max-width: 1100px) {
       .wall {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
@@ -523,17 +549,13 @@
           <div class="nameday-names" id="nameday-names">Ielādē vārda dienas...</div>
         </div>
 
-        <div class="news-card">
-          <div class="news-header">
-            <div class="news-title">Jaunākās ziņas — LSM</div>
-            <div class="news-updated" id="news-updated"></div>
-          </div>
-          <ul class="news-list" id="news-list">
-            <li class="news-item">
-              <div class="news-title-line">Ielādē ziņas...</div>
-            </li>
-          </ul>
-        </div>
+<div class="news-card">
+  <div class="news-slideshow">
+    <img id="news-photo-1" class="news-slide visible" src="" alt="Slaidrāde 1" />
+    <img id="news-photo-2" class="news-slide" src="" alt="Slaidrāde 2" />
+  </div>
+</div>
+
       </section>
     </section>
 
@@ -909,78 +931,68 @@
       setInterval(loadNamedays, 24 * 60 * 60 * 1000);
     })();
 
-    // ========================
-    // JAUNĀKĀS ZIŅAS — LSM (AllOrigins)
-    // ========================
-    (function setupNews() {
-      const RSS_URL = "https://www.lsm.lv/rss/?lang=lv&catid=14";
-      const listEl = document.getElementById("news-list");
-      const updatedEl = document.getElementById("news-updated");
+ // ========================
+// FOTO SLAIDRĀDE ZIŅU KARTĪTĒ
+// ========================
+(function setupPhotoSlideshow() {
+  // ŠEIT IERAKSTI SAVUS ATTĒLU URL (līdz 20 vai vairāk, kā vajag)
+  const urls = [
+    "https://images.pexels.com/photos/1303081/pexels-photo-1303081.jpeg?_gl=1*11vud1g*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUwMTk0OTEkbzIkZzAkdDE3NjUwMTk0OTEkajYwJGwwJGgw",
+    "https://images.pexels.com/photos/1656564/pexels-photo-1656564.jpeg?_gl=1*1wp2m1s*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYwODkkajU5JGwwJGgw",
+    "https://images.pexels.com/photos/716658/pexels-photo-716658.jpeg?_gl=1*1liclhb*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYxMTkkajI5JGwwJGgw",
+    "https://images.pexels.com/photos/1556679/pexels-photo-1556679.jpeg?_gl=1*xrcpo2*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYxMTkkajI5JGwwJGgw",
+    "https://images.pexels.com/photos/1578010/pexels-photo-1578010.jpeg?_gl=1*xrcpo2*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYxMTkkajI5JGwwJGgw",
+    "https://images.pexels.com/photos/735423/pexels-photo-735423.jpeg?_gl=1*v8bpi3*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYxMTkkajI5JGwwJGgw",
+    "https://images.pexels.com/photos/247076/pexels-photo-247076.jpeg?_gl=1*v8bpi3*_ga*MjEwODA1MDc1Ny4xNzY0OTg0ODk5*_ga_8JE65Q40S6*czE3NjUxMjYwODgkbzMkZzEkdDE3NjUxMjYxMTkkajI5JGwwJGgw"
+    // ... pieliec vēl līdz 20+ URL
+  ];
 
-      async function loadNews() {
-        try {
-          const proxyUrl =
-            "https://api.allorigins.win/raw?url=" + encodeURIComponent(RSS_URL);
+  const img1 = document.getElementById("news-photo-1");
+  const img2 = document.getElementById("news-photo-2");
+  if (!img1 || !img2 || !urls.length) return;
 
-          const res = await fetch(proxyUrl);
-          if (!res.ok) throw new Error("Tīkla kļūda (RSS proxy)");
-          const text = await res.text();
+  let currentIndex = 0;
+  let showingFirst = true;
 
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(text, "application/xml");
-          const items = Array.from(xml.querySelectorAll("item")).slice(0, 6);
+  function setImage(img, url, cb) {
+    img.onload = () => {
+      img.onload = null;
+      cb && cb();
+    };
 
-          listEl.innerHTML = "";
+    img.src = url;
 
-          if (!items.length) {
-            listEl.innerHTML =
-              '<li class="news-item"><div class="news-title-line">Nav ziņu.</div></li>';
-            updatedEl.textContent = "";
-            return;
-          }
+    // ja jau kešā
+    if (img.complete) {
+      img.onload = null;
+      cb && cb();
+    }
+  }
 
-          const now = new Date();
-          const hh = String(now.getHours()).padStart(2, "0");
-          const mm = String(now.getMinutes()).padStart(2, "0");
-          updatedEl.textContent = `Atjaunots ${hh}:${mm}`;
+  function switchSlide() {
+    const nextIndex = (currentIndex + 1) % urls.length;
+    const nextUrl = urls[nextIndex];
 
-          items.forEach((item) => {
-            const title = item.querySelector("title")?.textContent || "(bez nosaukuma)";
-            const link = item.querySelector("link")?.textContent || "#";
-            const pubDate = item.querySelector("pubDate")?.textContent || "";
-            let timeStr = "";
-            if (pubDate) {
-              const d = new Date(pubDate);
-              if (!isNaN(d.getTime())) {
-                const h = String(d.getHours()).padStart(2, "0");
-                const m = String(d.getMinutes()).padStart(2, "0");
-                timeStr = `${h}:${m}`;
-              }
-            }
+    const incoming = showingFirst ? img2 : img1;
+    const outgoing = showingFirst ? img1 : img2;
 
-            const li = document.createElement("li");
-            li.className = "news-item";
-            li.innerHTML = `
-              <div class="news-title-line"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
-              ${
-                timeStr
-                  ? `<div class="news-meta">${timeStr}</div>`
-                  : '<div class="news-meta">&nbsp;</div>'
-              }
-            `;
-            listEl.appendChild(li);
-          });
-        } catch (e) {
-          console.error(e);
-          listEl.innerHTML =
-            '<li class="news-item"><div class="news-title-line">Neizdevās ielādēt LSM RSS (CORS/proxy problēma).</div></li>';
-          updatedEl.textContent = "";
-        }
-      }
+    setImage(incoming, nextUrl, () => {
+      outgoing.classList.remove("visible");
+      incoming.classList.add("visible");
 
-      loadNews();
-      setInterval(loadNews, 10 * 60 * 1000);
-    })();
+      currentIndex = nextIndex;
+      showingFirst = !showingFirst;
+    });
+  }
+
+  // sākuma bilde
+  setImage(img1, urls[0], () => {
+    img1.classList.add("visible");
+  });
+
+  // maiņas intervāls (piemēram, ik pēc 15 sekundēm)
+  setInterval(switchSlide, 15000);
+})();
 
   // ========================
 // FONA ATTĒLI — maigs crossfade
